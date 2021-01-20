@@ -1,0 +1,1 @@
+python wow_curse_2020.py

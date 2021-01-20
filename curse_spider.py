@@ -256,21 +256,21 @@ def loadAddonsInfo(addonID):
             break
     return downloadurl
 
-def findAddonsID():
-    addonsDict = {
-        "details": 61284,
-        "deadly-boss-mods": 3358,
-        "weakauras-2": 65387,
-        "bagnon": 1592,
-        "method-dungeon-tools": 288981,
-        "angry-keystones": 102522,
-        "championcommander": 300882,
-        "lunataotao": 301866,
-        "tullarange": 26753,
-        "pawn": 4646,
-        # "mapster": 14376
-    }
-    return addonsDict
+# def testAddonsID():
+#     addonsDict = {
+#         "details": 61284,
+#         "deadly-boss-mods": 3358,
+#         "weakauras-2": 65387,
+#         "bagnon": 1592,
+#         "method-dungeon-tools": 288981,
+#         "angry-keystones": 102522,
+#         "championcommander": 300882,
+#         "lunataotao": 301866,
+#         "tullarange": 26753,
+#         "pawn": 4646,
+#         # "mapster": 14376
+#     }
+#     return addonsDict
 
 def checkAddons(addonsList):
     addonsDict = {}
@@ -298,7 +298,7 @@ if __name__ == "__main__":
         print('[Invalid DownloadPath]: {}'.format(downloadPath))
         sys.exit()
     
-    # addonsList = findAddonsID()
+    # addonsList = testAddonsID()
     addonsList = checkAddons(configs['Addons'])
 
     print('[Addons Count]: {}'.format(len(addonsList)))

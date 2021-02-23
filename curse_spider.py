@@ -14,7 +14,7 @@ is_py2 = (_ver[0] == 2)
 is_py3 = (_ver[0] == 3)
 is_request = False
 is_urllib2 = False
-is_urllib = False
+is_urllib_request = False
 
 try:
     import requests
@@ -27,7 +27,7 @@ except:
         print('[System]: import urllib2')
     elif is_py3:
         import urllib.request
-        is_urllib = True
+        is_urllib_request = True
         print('[System]: import urllib')
 
 if sys.platform == 'win32':
@@ -232,10 +232,10 @@ def ExtractZip(sZip, sExtPath, filterDir=[]):
 netSpider = None
 if is_request:
     netSpider = SpiderRequest()
-elif is_urllib2 or is_urllib:
+elif is_urllib2 or is_urllib_request:
     netSpider = SpiderUrllib()
 else:
-    raise Exception("[Error]net spider none!")
+    raise Exception("Net spider none!")
 
 def getZipName(sUrl): 
     # API示例: https://edge.forgecdn.net/files/2747/1/AngryKeystones-v0.18.0.zip
@@ -376,7 +376,7 @@ if __name__ == "__main__":
             print('\n[Error]??? {}'.format(sError))
             if sNowAddons != '' and os.path.exists(sNowAddons):
                 os.remove(sNowAddons)
-                print('[Error]remove temp file')
+                print('[Error]: remove temp file')
         print('------------------------------------------------')
 
     print('[install complete]')

@@ -14,35 +14,43 @@ is_py2 = (_ver[0] == 2)
 is_py3 = (_ver[0] == 3)
 is_request = False
 is_urllib2 = False
+is_urllib = False
 
 try:
     import requests
     is_request = True
+    print('[System]: import requests')
 except:
-    import urllib2
-    is_urllib2 = True
+    if is_py2:
+        import urllib2
+        is_urllib2 = True
+        print('[System]: import urllib2')
+    elif is_py3:
+        import urllib.request
+        is_urllib = True
+        print('[System]: import urllib')
 
-_nTimeOut = 30
-_sMozilla = 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'
+if sys.platform == 'win32':
+    try:
+        import win32con, win32api
+        print('[System]: import win32con')
+    except:
+        print('[System]: can not import win32con')
 
-class MyResponse:
-    headers = None
-    content = None
-    def __init__(self, headers, content):
-        self.headers = headers
-        self.content = content
-
-def getOSName():
-    sName = ''
-    if os.name == 'nt':
-        sName = 'Windows'
+def GetOSName():
+    sName = None
+    if sys.platform == 'win32':
+        sName = "Windows"
+    elif sys.platform.startswith('linux'):
+        sName = "Linux"
     else:
-        sName = 'Mac'
-    print('[Check OS]: {}'.format(sName))
+        sName = "Mac" 
+    print('[Check OS]: {}'.format(os.name))
+    print('[Check SYS]: {}'.format(sys.platform))
     print('[Check PY]: {}'.format(sys.version))
     return sName
 
-def checkDir(sPath):
+def CheckDir(sPath):
     return os.path.isdir(sPath)
 
 def chunk_report(bytes_so_far, chunk_size, total_size):
@@ -52,75 +60,115 @@ def chunk_report(bytes_so_far, chunk_size, total_size):
     sys.stdout.write("\r[%s%s] (%0.2f%%)" % ('*' * done, ' ' * (50 - done), percent))
     sys.stdout.flush()
     if bytes_so_far >= total_size:
-        sys.stdout.write('\n')  
+        sys.stdout.write('\n')
 
-def downloadFileByRequest(sUrl, sDownlaodPath, chunk_size=8192):
-    response = requests.get(sUrl, timeout=_nTimeOut, stream=True)
-    total_size = response.headers['Content-Length']
-    total_size = int(total_size)
-    bytes_so_far = 0
-    with open(sDownlaodPath, 'wb') as code:
-        for chunk in response.iter_content(chunk_size=chunk_size):
-            if not chunk:
-                break
-            code.write(chunk)
-            bytes_so_far += len(chunk)
-            chunk_report(bytes_so_far, chunk_size, total_size)
-    return bytes_so_far
+class Spider(object):
+    def __init__(self):
+        object.__init__(self)
+        self.timeout = 30
+        self.chunk_size = 8192
+        self.mozilla_str = 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'
 
-def getUnRedirectUrlByRequest(sUrl):
-    response = requests.get(sUrl, timeout=_nTimeOut, stream=True, allow_redirects=False)
-    response.raise_for_status()
-    return response
+    def DownloadFile(self, sUrl, sDownlaodPath):
+        pass
 
-def downloadFileByUrllib(sUrl, sDownlaodPath, chunk_size=8192):
-    response = urllib2.urlopen(sUrl, timeout=_nTimeOut)
-    total_size = response.headers['Content-Length']
-    total_size = int(total_size)
-    bytes_so_far = 0
-    with open(sDownlaodPath, 'wb') as code:
-        while 1:
-            chunk = response.read(chunk_size)
-            if not chunk:
-                break
-            code.write(chunk)
-            bytes_so_far += len(chunk)
-            chunk_report(bytes_so_far, chunk_size, total_size)
-    return bytes_so_far
+    def GetRedirectUrl(self, sUrl):
+        pass
 
-def getUnRedirectUrlByUrllib(sUrl):
-    class MyRedirectHandler(urllib2.HTTPRedirectHandler):
-        def http_error_302(self, req, fp, code, msg, headers):
-            return 
-        http_error_301 = http_error_303 = http_error_307 = http_error_302
+    def GetUrlContent(self, sUrl):
+        pass
 
-    print(sUrl)
-    req = urllib2.Request(sUrl)
-    debug_handler = urllib2.HTTPHandler(debuglevel = 1)
-    opener = urllib2.build_opener(debug_handler, MyRedirectHandler)
-    opener.addheaders = [('User-agent', _sMozilla)]
+class SpiderRequest(Spider):
+    def __init__(self):
+        Spider.__init__(self)
 
-    response = None
-    page = None
-    headers = None
- 
-    try:
-        response = opener.open(sUrl, timeout=_nTimeOut)
-        page = response.read()
-        headers = response.headers
-    except urllib2.URLError as e:
-        if e.code in (300, 301, 302, 303, 307):
-            headers = e.headers
-        else:
-            raise Exception('[URL Error]', e.code, e.reason)
-    finally:
-        if response:
-            response.close()
- 
-    data = MyResponse(headers, page)
-    return data
+    def DownloadFile(self, sUrl, sDownlaodPath):
+        response = requests.get(sUrl, timeout=self.timeout, stream=True)
+        total_size = response.headers['Content-Length']
+        total_size = int(total_size)
+        bytes_so_far = 0
+        with open(sDownlaodPath, 'wb') as code:
+            for chunk in response.iter_content(chunk_size=self.chunk_size):
+                if not chunk:
+                    break
+                code.write(chunk)
+                bytes_so_far += len(chunk)
+                chunk_report(bytes_so_far, self.chunk_size, total_size)
+        return bytes_so_far
 
-def extractZip(sZip, sExtPath, filterDir=[]):
+    def GetRedirectUrl(self, sUrl):
+        response = requests.get(sUrl, timeout=self.timeout, stream=True, allow_redirects=False)
+        response.raise_for_status()
+        return response
+    
+    def GetUrlContent(self, sUrl):
+        headers = {'user-agent': self.mozilla_str}
+        response = requests.get(sUrl, headers=headers, timeout=self.timeout)
+        return response.text
+
+class SpiderUrllib(Spider):
+    def __init__(self):
+        Spider.__init__(self)
+        self.my_urllib = urllib2 if is_py2 else urllib.request
+
+    def DownloadFile(self, sUrl, sDownlaodPath):
+        response = self.my_urllib.urlopen(sUrl, timeout=self.timeout)
+        total_size = response.headers['Content-Length']
+        total_size = int(total_size)
+        bytes_so_far = 0
+        with open(sDownlaodPath, 'wb') as code:
+            while 1:
+                chunk = response.read(self.chunk_size)
+                if not chunk:
+                    break
+                code.write(chunk)
+                bytes_so_far += len(chunk)
+                chunk_report(bytes_so_far, self.chunk_size, total_size)
+        return bytes_so_far
+
+    def GetRedirectUrl(self, sUrl):
+        class MyRedirectHandler(self.my_urllib.HTTPRedirectHandler):
+            def http_error_302(self, req, fp, code, msg, headers):
+                return 
+            http_error_301 = http_error_303 = http_error_307 = http_error_302
+        
+        class MyResponse:
+            headers = None
+            content = None
+            def __init__(self, headers, content):
+                self.headers = headers
+                self.content = content
+
+        # print(sUrl)
+        debugHandler = self.my_urllib.HTTPHandler(debuglevel = 1)
+        opener = self.my_urllib.build_opener(debugHandler, MyRedirectHandler)
+        opener.addheaders = [('User-agent', self.mozilla_str)]
+
+        response = None
+        page = None
+        headers = None
+        try:
+            response = opener.open(sUrl, timeout=self.timeout)
+            page = response.read()
+            headers = response.headers
+        except self.my_urllib.URLError as e:
+            if e.code in (300, 301, 302, 303, 307):
+                headers = e.headers
+            else:
+                raise Exception('[URL Error]', e.code, e.reason)
+        finally:
+            if response:
+                response.close()
+    
+        data = MyResponse(headers, page)
+        return data
+
+    def GetUrlContent(self, sUrl):
+        response = self.my_urllib.urlopen(sUrl, timeout=self.timeout)
+        contents = response.read().decode('UTF-8')
+        return contents
+
+def ExtractZip(sZip, sExtPath, filterDir=[]):
     def isFileter(key, filters):
         for e in filters:
             if e == key:
@@ -181,6 +229,14 @@ def extractZip(sZip, sExtPath, filterDir=[]):
 
 #============================================================================
 
+netSpider = None
+if is_request:
+    netSpider = SpiderRequest()
+elif is_urllib2 or is_urllib:
+    netSpider = SpiderUrllib()
+else:
+    raise Exception("[Error]net spider none!")
+
 def getZipName(sUrl): 
     # API示例: https://edge.forgecdn.net/files/2747/1/AngryKeystones-v0.18.0.zip
     pattern = re.compile('/(\d+)/(\d+)/([\S ]+.zip)')
@@ -203,17 +259,14 @@ def downloadAddons(sUrl, sAddons):
     if sAddons.find('.zip') < 0:
         raise Exception("DownLoad Invalid ZIP!", sAddons)
     print('[Download]: {}'.format(sAddons))
-    if is_request:
-        downloadFileByRequest(sUrl, sAddons)
-    elif is_urllib2:
-        downloadFileByUrllib(sUrl, sAddons)
+    netSpider.DownloadFile(sUrl, sAddons)
 
 def installAddons(sZip, sInstallPath):
     if sZip.find('.zip') < 0:
         raise Exception("Extract Invalid ZIP!", sZip)
     filterDir = ['Interface/', 'Interface/AddOns/', 'Interface/readme.txt']
     print('[Install]: {}'.format(sInstallPath))
-    extractZip(sZip, sInstallPath, filterDir)
+    ExtractZip(sZip, sInstallPath, filterDir)
 
 def loadAddonsJson(sConfig):
     if os.path.exists(sConfig) == False:
@@ -238,15 +291,7 @@ def loadAddonsJson(sConfig):
 
 def loadAddonsInfo(addonID):
     sUrl = 'https://addons-ecs.forgesvc.net/api/v2/addon/{}'.format(addonID)
-    contents = ''
-    if is_py2:
-        response = urllib2.urlopen(sUrl, timeout=_nTimeOut)
-        contents = response.read().decode('UTF-8')
-    elif is_py3:
-        headers = {'user-agent': _sMozilla}
-        response = requests.get(sUrl, headers=headers, timeout=_nTimeOut)
-        contents = response.text
-
+    contents = netSpider.GetUrlContent(sUrl)
     data = json.loads(contents)
 
     downloadurl = ''
@@ -281,20 +326,34 @@ def checkAddons(addonsList):
             addonsDict[key] = value
     return addonsDict
 
+def find_wow_path(): 
+    upper_keyword = 'WOW.EXE'
+    path = None
+    sub_key = r'Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Compatibility Assistant\Store'
+    key = win32api.RegOpenKey(win32con.HKEY_CURRENT_USER, sub_key, 0, win32con.KEY_READ) 
+    info = win32api.RegQueryInfoKey(key) 
+    for i in range(0, info[1]):  
+        value = win32api.RegEnumValue(key, i)  
+        if value[0].upper().endswith(upper_keyword):
+            path = value[0]   
+            break
+    win32api.RegCloseKey(key) 
+    return path
+
 if __name__ == "__main__":
-    sPlatform = getOSName()
+    sPlatform = GetOSName()
     configs = loadAddonsJson("config.json")
     if configs == None:
         print('[Invalid Config]')
         sys.exit()
 
     wowPath = configs[sPlatform]['WowPath']
-    if checkDir(wowPath) == False:
+    if CheckDir(wowPath) == False:
         print('[Invalid WowPath]: {}'.format(wowPath))
         sys.exit()
 
     downloadPath = configs[sPlatform]['TempPath']
-    if checkDir(downloadPath) == False:
+    if CheckDir(downloadPath) == False:
         print('[Invalid DownloadPath]: {}'.format(downloadPath))
         sys.exit()
     

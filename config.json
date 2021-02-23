@@ -9,6 +9,11 @@
         "TempPath": "/Users/san/Downloads/WoWAddons"
     },
 
+    "Linux": {
+        "WowPath": "/mnt/d/game/World of Warcraft/_retail_/Interface/AddOns",
+        "TempPath": "/mnt/d/temp/wowcache"
+    },
+
     "Addons": [
        {"name": "details",              "id": 61284,  "enable": true},
        {"name": "deadly-boss-mods",     "id": 3358,   "enable": true},
@@ -19,6 +24,7 @@
        {"name": "championcommander",    "id": 300882, "enable": true},
        {"name": "lunataotao",           "id": 301866, "enable": true},
        {"name": "tullarange",           "id": 26753,  "enable": true},
-       {"name": "pawn",                 "id": 4646,   "enable": true}
+       {"name": "pawn",                 "id": 4646,   "enable": true},
+       {"name": "CovenantMissionHelper", "id": 434671, "enable": true}
     ]
 }

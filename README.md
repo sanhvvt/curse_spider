@@ -1,6 +1,8 @@
 # curse_spider
 
 一个魔兽插件spider  
+支持版本：9.0.2   
+
 如果需要requests模块, 安装pip install requests  
 自适应python2，python3  
 python2: 依赖urllib2  
